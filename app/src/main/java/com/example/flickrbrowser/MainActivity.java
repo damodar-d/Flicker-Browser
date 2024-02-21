@@ -14,23 +14,29 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.flickrbrowser.databinding.ActivityMainBinding;
 
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements GetFlickrJsonData.OnDataAvailable {
+public class MainActivity extends AppCompatActivity implements GetFlickrJsonData.OnDataAvailable, RecyclerItemClickListener.OnRecyclerClickListener {
 
     private static final String TAG = "MainActivity";
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
+    private FlickerRecyclerViewAdapter mFlickerRecyclerViewAdapter;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate: starts");
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate: Main Thread = "+ Thread.currentThread().getName());
 
@@ -38,6 +44,11 @@ public class MainActivity extends AppCompatActivity implements GetFlickrJsonData
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
+        mFlickerRecyclerViewAdapter = new FlickerRecyclerViewAdapter( new ArrayList<Photo>(),this);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.addOnItemTouchListener(new RecyclerItemClickListener(this,recyclerView,this));
+        recyclerView.setAdapter(mFlickerRecyclerViewAdapter);
 
 
         binding.fab.setOnClickListener(view ->
@@ -75,13 +86,14 @@ public class MainActivity extends AppCompatActivity implements GetFlickrJsonData
     @Override
     public void onDataAvailable(List<Photo> data, DownloadStatus status) {
 
+        Log.d(TAG, "onDataAvailable: start");
         if(status==DownloadStatus.OK){
-
-            Log.d(TAG, "onDataAvailable: Data Available:"+ data.toString());
+            mFlickerRecyclerViewAdapter.loadNewData(data);
         }
         else{
             Log.d(TAG, "onDataAvailable: Failed to fetch data: "+status);
         }
+        Log.d(TAG, "onDataAvailable: ends");
     }
 
     @Override
@@ -93,5 +105,19 @@ public class MainActivity extends AppCompatActivity implements GetFlickrJsonData
         ,"en-us", true);
         getFlickrJsonData.executeOnSameThread("android lollipop ");
         Log.d(TAG, "onResume: ends");
+    }
+
+    @Override
+    public void onItemClick(View view, int position) {
+
+        Log.d(TAG, "onItemClick: starts");
+        Toast.makeText(this,"simple tap at position: "+ position,Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void onItemLongClick(View view, int position) {
+
+        Log.d(TAG, "onItemLongClick: starts");
+        Toast.makeText(this,"long tap at position: "+ position,Toast.LENGTH_LONG).show();
     }
 }
